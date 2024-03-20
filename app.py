@@ -181,7 +181,7 @@ def upload():
 def save_transition_effect():
     data = request.json
     if 'effect' not in data:
-        return jsonify({'message': 'No transition effect provided'}), 400
+        return jsonify({'message': 'No transition effect provided'}), 400           
     global T_effect
     T_effect = data.get('effect')
 
@@ -490,32 +490,6 @@ def upload_audio():
 
 from flask import request, jsonify
 
-@app.route('/upload_demo_audio', methods=['POST'])
-def upload_demo_audio():
-    data = request.json
-    print("Received JSON data:", data)  
-    if 'audio_path' not in data:
-        return jsonify({'message': 'No audio path provided'}), 400
-
-    audio_path = data.get('audio_path')
-    if not audio_path:
-        return jsonify({'message': 'No selected audio'}), 400
-
-    try:
-        conn = connect_to_database()
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO demo_audio_files (file_name, file_path) VALUES (%s, %s)", (audio_path, audio_path))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return jsonify({'message': 'Demo audio uploaded successfully'}), 200
-    except psycopg2.Error as e:
-        print("Error uploading demo audio:", e)
-        return jsonify({'message': 'Error storing demo audio file data in the database.'}), 500
-    except Exception as e:
-        print("Error uploading demo audio:", e)
-        return jsonify({'message': 'An error occurred while processing your request.'}), 500
-    
 
 import os
 
