@@ -216,7 +216,7 @@ def create_video(transition_effect='pixelize'):
             return False
 
         fps = 24
-        size = (1280, 720)
+        size = (256, 144)
         desired_duration = session.get('desired_duration', 2)
 
         clips = []
