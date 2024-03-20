@@ -19,6 +19,25 @@ from moviepy.editor import VideoFileClip
 from flask import Flask, render_template, request, redirect, url_for, send_file
 
 
+def connect_to_database():
+    conn_params = {
+        'host': 'slidecraft-4426.g95.gcp-us-west2.cockroachlabs.cloud',
+        'port': 26257,
+        'user': 'khwaish',   
+        'password': 'vcgRLrp1-4aFAia-eYYx1A',
+        'database': 'sys',
+        'sslmode': 'verify-full',
+        'sslrootcert': 'root.crt'
+    }
+
+    conn_str = "host={host} port={port} user={user} password={password} dbname={database} sslmode={sslmode} sslrootcert={sslrootcert}".format(**conn_params)
+
+    # Connect to the database
+    try:
+        conn = psycopg2.connect(conn_str)
+        return conn
+    except psycopg2.OperationalError as e:
+        return None
 
 def set_username(username):
     session['username'] = username
@@ -34,7 +53,7 @@ url = 'postgresql://khwaish:vcgRLrp1-4aFAia-eYYx1A@slidecraft-4426.g95.gcp-us-we
 
 def create_tables():
     try:
-        conn = psycopg2.connect(url)
+        conn = connect_to_database()
         cursor = conn.cursor()
         cursor.execute("CREATE TABLE IF NOT EXISTS user_login (id SERIAL PRIMARY KEY, username VARCHAR(255), password VARCHAR(255), name VARCHAR(255), dob DATE);")
         cursor.execute("CREATE TABLE IF NOT EXISTS uploaded_images (id SERIAL PRIMARY KEY, Duration INT, name VARCHAR(255), path VARCHAR(255), size INT)")
@@ -50,7 +69,7 @@ create_tables()
 
 def fetch_user_details():
     try:
-        conn = psycopg2.connect(url)
+        conn = connect_to_database()
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("SELECT id, username, name, dob FROM user_login")
         users = cursor.fetchall()
@@ -77,7 +96,7 @@ def signup_submit():
     dob = request.form['dob']   
 
     try:
-        conn = psycopg2.connect(url)
+        conn = connect_to_database()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM user_login WHERE username = %s", (username,))
         existing_user = cursor.fetchone()
@@ -109,7 +128,7 @@ def login_submit():
     username = data.get('username')
     password = data.get('password')
     try:
-        conn = psycopg2.connect(url)
+        conn = connect_to_database()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM user_login WHERE username = %s AND password = %s", (username, password))
         user = cursor.fetchone()
@@ -136,7 +155,7 @@ def upload():
         return jsonify({'message': 'No selected file'}), 400
 
     try:
-        conn = psycopg2.connect(url)
+        conn = connect_to_database()
         cursor = conn.cursor()
         
         for file in files:
@@ -185,8 +204,7 @@ from moviepy.editor import ImageSequenceClip, concatenate_videoclips
 
 def create_video(transition_effect='pixelize'):
     try:
-        # Connect to CockroachDB
-        conn = psycopg2.connect(url)
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         image_folder = os.path.join(os.getcwd(), 'uploads')
@@ -277,7 +295,7 @@ def create_video(transition_effect='pixelize'):
 def add_audio_to_video():
     try:
 
-        conn = psycopg2.connect(url)
+        conn = connect_to_database()
         cursor = conn.cursor()
 
 
@@ -370,7 +388,7 @@ def create_transitioned_clip(clip1, clip2, transition_effect='pixelize'):
 def add_audio_to_clip(clip):
     try:
        
-        conn = psycopg2.connect(url)
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         
@@ -398,7 +416,7 @@ def add_audio_to_clip(clip):
 
 def fetch_audio_files():
     try:
-        conn = psycopg2.connect(url)
+        conn = connect_to_database()
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("SELECT file_name, file_path FROM audio_files")
         audio_files = cursor.fetchall()
@@ -445,7 +463,7 @@ def upload_audio():
 
     try:
         
-        conn = psycopg2.connect(url)
+        conn = connect_to_database()
         cursor = conn.cursor()
 
         
@@ -484,7 +502,7 @@ def upload_demo_audio():
         return jsonify({'message': 'No selected audio'}), 400
 
     try:
-        conn = psycopg2.connect(url)
+        conn = connect_to_database()
         cursor = conn.cursor()
         cursor.execute("INSERT INTO demo_audio_files (file_name, file_path) VALUES (%s, %s)", (audio_path, audio_path))
         conn.commit()
