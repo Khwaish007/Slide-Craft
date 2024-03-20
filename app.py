@@ -1,7 +1,7 @@
 import psycopg2
 import psycopg2.extras
 from flask import Flask, render_template, request, redirect, url_for, jsonify
-import jwt
+import  jwt
 import datetime
 import os
 from werkzeug.utils import secure_filename
@@ -60,6 +60,7 @@ def create_tables():
         cursor.execute("CREATE TABLE IF NOT EXISTS audio_files (id SERIAL PRIMARY KEY, file_name VARCHAR(255), file_path VARCHAR(255))")
         conn.commit()
         cursor.close()
+        conn.close()
     except psycopg2.Error as e:
         print("Error creating tables:", e)
 
@@ -73,6 +74,7 @@ def fetch_user_details():
         cursor.execute("SELECT id, username, name, dob FROM user_login")
         users = cursor.fetchall()
         cursor.close()
+        conn.close()
         return users
     except psycopg2.Error as e:
         print("Error fetching user details:", e)
@@ -100,11 +102,13 @@ def signup_submit():
         existing_user = cursor.fetchone()
         if existing_user:
             cursor.close()
+            conn.close()
             return 'Username already exists. Please choose a different one.'
         else:
             cursor.execute("INSERT INTO user_login(username, password, name, dob) VALUES (%s, %s, %s, %s)", (username, password, name, dob))
             conn.commit()
             cursor.close()
+            conn.close()
             return redirect(url_for('login'))
     except psycopg2.Error as e:
         print("Error signing up:", e)
@@ -132,6 +136,7 @@ def login_submit():
             set_username(username)
             token = jwt.encode({'username': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'])
             cursor.close()
+            conn.close()
             return jsonify({'message': 'successful', 'token': token})
         else:
             return jsonify({'message': 'Invalid username or password. Please sign up first.'})
@@ -163,6 +168,7 @@ def upload():
 
         conn.commit()
         cursor.close()
+        conn.close()
 
         return redirect(url_for('dropbox'))
 
@@ -277,6 +283,7 @@ def create_video(transition_effect='pixelize'):
 
 
         cursor.close()
+        conn.close()
 
         return True
 
@@ -347,6 +354,8 @@ def add_audio_to_video():
         
         if conn:
             cursor.close()
+            conn.close()
+
 
 def apply_transition(input_video1, input_video2, output_video, duration, offset, transition):
     try:
@@ -401,6 +410,9 @@ def add_audio_to_clip(clip):
         
         if conn:
             cursor.close()
+            conn.close()
+
+
 
 def fetch_audio_files():
     try:
@@ -409,6 +421,7 @@ def fetch_audio_files():
         cursor.execute("SELECT file_name, file_path FROM audio_files")
         audio_files = cursor.fetchall()
         cursor.close()
+        conn.close()
         return audio_files
     except psycopg2.Error as e:
         print("Error fetching audio files:", e)
@@ -459,6 +472,9 @@ def upload_audio():
         
         
         cursor.close()
+        conn.close()
+
+        
         create_video()
 
         return redirect(url_for('dropbox'))
@@ -491,6 +507,7 @@ def upload_demo_audio():
         cursor.execute("INSERT INTO demo_audio_files (file_name, file_path) VALUES (%s, %s)", (audio_path, audio_path))
         conn.commit()
         cursor.close()
+        conn.close()
         return jsonify({'message': 'Demo audio uploaded successfully'}), 200
     except psycopg2.Error as e:
         print("Error uploading demo audio:", e)
